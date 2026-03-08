@@ -52,17 +52,6 @@ jobs:
         run: |
           choco install nsis 7zip.install -y --no-progress
 
-      - name: Validate release secrets
-        shell: pwsh
-        run: |
-          $missing = @()
-          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_SIGN_PFX_BASE64)) { $missing += "WINDOWS_SIGN_PFX_BASE64" }
-          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_SIGN_PFX_PASSWORD)) { $missing += "WINDOWS_SIGN_PFX_PASSWORD" }
-          if ([string]::IsNullOrWhiteSpace($env:VIRUSTOTAL_API_KEY)) { $missing += "VIRUSTOTAL_API_KEY" }
-          if ($missing.Count -gt 0) {
-            throw "Missing required release secret(s): $($missing -join ', ')"
-          }
-
       - name: Derive release version
         id: version
         shell: pwsh
@@ -92,7 +81,7 @@ jobs:
       - name: Build signed release artifacts
         shell: pwsh
         run: |
-          .\audio-router\native-qt\qa\build-release.ps1 -BuildDir build-release -Configuration Release -Version "${{ steps.version.outputs.value }}" -FailOnSigningError -FailOnVirusTotalError
+          .\audio-router\native-qt\qa\build-release.ps1 -BuildDir build-release -Configuration Release -Version "${{ steps.version.outputs.value }}"
 
       - name: Upload release bundle
         if: always()

@@ -218,7 +218,13 @@ Set-Content -Path (Join-Path $stageDir "RELEASE-NOTES.txt") -Value $notes -Encod
 
 if (-not $SkipCodeSigning) {
     Write-Step "Code Signing (Staged Binary)"
-    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "sign-artifacts.ps1") -FilePaths @(Join-Path $stageDir "vdocable.exe") -FailOnError:$FailOnSigningError
+    $signStageArgs = @{
+        FilePaths = @(Join-Path $stageDir "vdocable.exe")
+    }
+    if ($FailOnSigningError) {
+        $signStageArgs.FailOnError = $true
+    }
+    & (Join-Path $PSScriptRoot "sign-artifacts.ps1") @signStageArgs
     if ($LASTEXITCODE -ne 0 -and $FailOnSigningError) {
         throw "Code signing failed for staged binary."
     }
@@ -275,7 +281,14 @@ if ($makensis) {
 
 if (-not $SkipCodeSigning) {
     Write-Step "Code Signing (Release EXEs)"
-    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "sign-artifacts.ps1") -DistDir $distRoot -Version $Version -FailOnError:$FailOnSigningError
+    $signDistArgs = @{
+        DistDir = $distRoot
+        Version = $Version
+    }
+    if ($FailOnSigningError) {
+        $signDistArgs.FailOnError = $true
+    }
+    & (Join-Path $PSScriptRoot "sign-artifacts.ps1") @signDistArgs
     if ($LASTEXITCODE -ne 0 -and $FailOnSigningError) {
         throw "Code signing failed for release EXEs."
     }
@@ -283,7 +296,14 @@ if (-not $SkipCodeSigning) {
 
 if (-not $SkipVirusTotal) {
     Write-Step "VirusTotal Submission"
-    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "submit-virustotal.ps1") -DistDir $distRoot -Version $Version -FailOnError:$FailOnVirusTotalError
+    $virusTotalArgs = @{
+        DistDir = $distRoot
+        Version = $Version
+    }
+    if ($FailOnVirusTotalError) {
+        $virusTotalArgs.FailOnError = $true
+    }
+    & (Join-Path $PSScriptRoot "submit-virustotal.ps1") @virusTotalArgs
     if ($LASTEXITCODE -ne 0 -and $FailOnVirusTotalError) {
         throw "VirusTotal submission failed."
     }
