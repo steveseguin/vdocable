@@ -27,6 +27,8 @@ This runs:
 - VirusTotal submission
 - GitHub release create or update
 
+The native fast gate must pass the packaged-app launch check from `dist/` with a stripped-down `PATH`; this prevents shipping builds that only work on the developer machine because Qt or VC runtimes are installed globally.
+
 ## Local build + package
 
 ```powershell
@@ -57,6 +59,8 @@ Optional local VirusTotal key locations:
 
 - `audio-router/native-qt/.vt-apikey`
 - repo root `.vt-apikey`
+
+The release packaging step also copies the VC++ runtime and required Qt support DLLs into the stage directory, so a fresh Windows machine does not depend on the local Qt SDK or Visual Studio runtime being preinstalled.
 
 ## Dependency checkout
 

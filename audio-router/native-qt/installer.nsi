@@ -26,8 +26,8 @@ VIAddVersionKey "FileVersion" "${VERSION}"
 VIAddVersionKey "LegalCopyright" "Copyright (c) 2026"
 
 !define MUI_ABORTWARNING
-!define MUI_ICON "..\..\game-capture\native-qt\resources\vdoninja.ico"
-!define MUI_UNICON "..\..\game-capture\native-qt\resources\vdoninja.ico"
+!define MUI_ICON "resources\vdocable.ico"
+!define MUI_UNICON "resources\vdocable.ico"
 
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
@@ -70,7 +70,7 @@ Section "Install"
     MessageBox MB_ICONSTOP|MB_OK "VDO Cable is still running or files are locked. Close the app and retry setup."
     Abort
     File /nonfatal "${BUILD_BIN_DIR}\*.dll"
-    File /nonfatal "${BUILD_BIN_DIR}\vdoninja.ico"
+    File /nonfatal "${BUILD_BIN_DIR}\vdocable.ico"
     File /nonfatal "${BUILD_BIN_DIR}\RELEASE-NOTES.txt"
 
     SetOutPath "$INSTDIR\platforms"

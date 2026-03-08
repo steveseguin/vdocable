@@ -33,6 +33,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\qa\run-fast-gate.ps1 -Buil
 powershell -NoProfile -ExecutionPolicy Bypass -File .\qa\build-release.ps1 -BuildDir build-local -Configuration Release -Version 0.1.0
 ```
 
+The fast gate now verifies two launch paths:
+
+- build-tree smoke launch with Qt on `PATH`
+- packaged `dist/.../vdocable.exe` launch with a minimal system `PATH`
+
+That second check catches missing CRT and Qt support DLLs before release.
+
 Release outputs land in `dist/` with these stable aliases:
 
 - `vdocable-setup.exe`

@@ -52,6 +52,33 @@ function Resolve-ExecutablePath([string]$RepoRoot, [string]$BuildDir, [string]$C
     return ""
 }
 
+function Invoke-SmokeLaunch([string]$ExecutablePath, [string]$PathValue, [int]$TimeoutMs) {
+    $workingDir = Split-Path -Parent $ExecutablePath
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = $ExecutablePath
+    $psi.WorkingDirectory = $workingDir
+    $psi.Arguments = "--smoke-test --auto-exit-ms 2500"
+    $psi.UseShellExecute = $false
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.EnvironmentVariables["PATH"] = $PathValue
+
+    $process = [System.Diagnostics.Process]::Start($psi)
+    if (-not $process.WaitForExit($TimeoutMs)) {
+        try {
+            $process.Kill()
+        } catch {
+        }
+        throw "Smoke launch timed out for $ExecutablePath"
+    }
+
+    $stdout = $process.StandardOutput.ReadToEnd()
+    $stderr = $process.StandardError.ReadToEnd()
+    if ($process.ExitCode -ne 0) {
+        throw "Smoke launch exited with code $($process.ExitCode) for $ExecutablePath`nSTDOUT: $stdout`nSTDERR: $stderr"
+    }
+}
+
 function Resolve-MakensisPath {
     $command = Get-Command makensis.exe -ErrorAction SilentlyContinue
     if ($command) {
@@ -164,6 +191,17 @@ if (-not $SkipPackage) {
     if ((Resolve-SevenZipExe) -and -not (Test-Path (Join-Path $distRoot "vdocable-portable.exe"))) {
         throw "7-Zip is present but portable artifact is missing."
     }
+    $stageExe = Join-Path $distRoot "vdocable-0.0.0-ci-win64\vdocable.exe"
+    if (-not (Test-Path $stageExe)) {
+        throw "Missing packaged stage executable: $stageExe"
+    }
+    foreach ($crtName in @("MSVCP140.dll", "VCRUNTIME140.dll", "VCRUNTIME140_1.dll")) {
+        if (-not (Test-Path (Join-Path (Split-Path -Parent $stageExe) $crtName))) {
+            throw "Missing required VC runtime DLL in package staging: $crtName"
+        }
+    }
+    Invoke-SmokeLaunch -ExecutablePath $stageExe -PathValue "C:\Windows\System32;C:\Windows;C:\Windows\System32\Wbem" -TimeoutMs 10000
+    $results += "- Packaged smoke launch: PASS"
     $results += "- Packaging: PASS"
 }
 

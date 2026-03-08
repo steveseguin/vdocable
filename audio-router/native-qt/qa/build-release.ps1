@@ -74,6 +74,45 @@ function Resolve-SevenZipSfx {
     return ""
 }
 
+function Resolve-QtBinDir {
+    $candidates = @()
+    if (-not [string]::IsNullOrWhiteSpace($env:QT_ROOT_DIR)) {
+        $candidates += (Join-Path $env:QT_ROOT_DIR "bin")
+    }
+
+    $windeployqt = Resolve-WindeployQtPath
+    if ($windeployqt) {
+        $deployDir = Split-Path -Parent $windeployqt
+
+        $vcpkgStyleRoot = Resolve-Path (Join-Path $deployDir "..\..\..") -ErrorAction SilentlyContinue
+        if ($vcpkgStyleRoot) {
+            $candidates += (Join-Path $vcpkgStyleRoot.Path "bin")
+        }
+        $candidates += $deployDir
+    }
+
+    $candidates += @(
+        "C:\vcpkg\installed\x64-windows\bin",
+        "C:\Qt\6.8.3\msvc2022_64\bin"
+    )
+
+    foreach ($candidate in ($candidates | Select-Object -Unique)) {
+        if (-not [string]::IsNullOrWhiteSpace($candidate) -and
+            (Test-Path $candidate) -and
+            (Test-Path (Join-Path $candidate "Qt6Core.dll"))) {
+            return $candidate
+        }
+    }
+
+    foreach ($candidate in ($candidates | Select-Object -Unique)) {
+        if (-not [string]::IsNullOrWhiteSpace($candidate) -and (Test-Path $candidate)) {
+            return $candidate
+        }
+    }
+
+    return ""
+}
+
 function Resolve-MakensisPath {
     $command = Get-Command makensis.exe -ErrorAction SilentlyContinue
     if ($command) {
@@ -92,6 +131,91 @@ function Resolve-MakensisPath {
         }
     }
     return ""
+}
+
+function Resolve-VcRuntimeDir {
+    $roots = @()
+    if (-not [string]::IsNullOrWhiteSpace($env:VCINSTALLDIR) -and (Test-Path $env:VCINSTALLDIR)) {
+        $roots += (Resolve-Path (Join-Path $env:VCINSTALLDIR "..\Redist\MSVC")).Path
+    }
+
+    $roots += @(
+        "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Redist\MSVC",
+        "C:\Program Files (x86)\Microsoft Visual Studio\2022\Community\VC\Redist\MSVC",
+        "C:\Program Files (x86)\Microsoft Visual Studio\2022\Professional\VC\Redist\MSVC",
+        "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Redist\MSVC"
+    )
+
+    $candidates = @()
+    foreach ($root in ($roots | Select-Object -Unique)) {
+        if (-not [string]::IsNullOrWhiteSpace($root) -and (Test-Path $root)) {
+            $candidates += Get-ChildItem -Path $root -Directory -ErrorAction SilentlyContinue |
+                ForEach-Object { Join-Path $_.FullName "x64\Microsoft.VC143.CRT" } |
+                Where-Object { Test-Path $_ }
+        }
+    }
+
+    if (-not $candidates) {
+        return ""
+    }
+
+    return ($candidates |
+        Sort-Object {
+            try {
+                [version](Split-Path (Split-Path $_ -Parent) -Leaf)
+            } catch {
+                [version]"0.0.0.0"
+            }
+        } -Descending |
+        Select-Object -First 1)
+}
+
+function Copy-VcRuntimeLibraries([string]$StageDir) {
+    $runtimeDir = Resolve-VcRuntimeDir
+    if (-not $runtimeDir) {
+        Write-Warning "VC runtime redist directory not found; packaged app may require the VC++ runtime to already be installed."
+        return
+    }
+
+    $runtimeDlls = Get-ChildItem -Path $runtimeDir -Filter "*.dll" -File -ErrorAction SilentlyContinue
+    if (-not $runtimeDlls) {
+        Write-Warning "No VC runtime DLLs found in $runtimeDir"
+        return
+    }
+
+    foreach ($dll in $runtimeDlls) {
+        Copy-Item -Path $dll.FullName -Destination (Join-Path $StageDir $dll.Name) -Force
+    }
+}
+
+function Copy-QtSupportLibraries([string]$StageDir, [string]$QtBinDir) {
+    if (-not $QtBinDir -or -not (Test-Path $QtBinDir)) {
+        Write-Warning "Qt bin directory not found; skipping support library copy."
+        return
+    }
+
+    $supportDlls = @(
+        "brotlicommon.dll",
+        "brotlidec.dll",
+        "bz2.dll",
+        "double-conversion.dll",
+        "freetype.dll",
+        "harfbuzz.dll",
+        "jpeg62.dll",
+        "libcrypto-3-x64.dll",
+        "libpng16.dll",
+        "md4c.dll",
+        "pcre2-16.dll",
+        "zlib1.dll",
+        "zstd.dll"
+    )
+
+    foreach ($dllName in $supportDlls) {
+        $sourcePath = Join-Path $QtBinDir $dllName
+        if (Test-Path $sourcePath) {
+            Copy-Item -Path $sourcePath -Destination (Join-Path $StageDir $dllName) -Force
+        }
+    }
 }
 
 function Convert-ToNsisVersion([string]$Value) {
@@ -128,7 +252,8 @@ $installerVersionedPath = Join-Path $distRoot "$artifactPrefix-$Version-setup.ex
 $installerStablePath = Join-Path $distRoot "$artifactPrefix-setup.exe"
 $portableVersionedPath = Join-Path $distRoot "$artifactPrefix-$Version-portable.exe"
 $portableStablePath = Join-Path $distRoot "$artifactPrefix-portable.exe"
-$iconPath = Join-Path $workspaceRoot "game-capture\native-qt\resources\vdoninja.ico"
+$iconPath = Join-Path $repoRoot "resources\vdocable.ico"
+$qtBinDir = Resolve-QtBinDir
 
 Write-Step "Stage Artifacts"
 if (Test-Path $stageDir) {
@@ -137,7 +262,7 @@ if (Test-Path $stageDir) {
 New-Item -ItemType Directory -Path $stageDir -Force | Out-Null
 Copy-Item -Path $exePath -Destination (Join-Path $stageDir "vdocable.exe") -Force
 if (Test-Path $iconPath) {
-    Copy-Item -Path $iconPath -Destination (Join-Path $stageDir "vdoninja.ico") -Force
+    Copy-Item -Path $iconPath -Destination (Join-Path $stageDir "vdocable.ico") -Force
 }
 
 $windeployqt = Resolve-WindeployQtPath
@@ -159,6 +284,8 @@ if ($windeployqt) {
         }
     }
 }
+Copy-VcRuntimeLibraries -StageDir $stageDir
+Copy-QtSupportLibraries -StageDir $stageDir -QtBinDir $qtBinDir
 
 $platformsDir = Join-Path $stageDir "platforms"
 $stylesDir = Join-Path $stageDir "styles"
@@ -212,7 +339,8 @@ $notes = @(
     "Contents:",
     "- vdocable.exe",
     "- Qt runtime files",
-    "- vdoninja.ico"
+    "- VC++ runtime files",
+    "- vdocable.ico"
 )
 Set-Content -Path (Join-Path $stageDir "RELEASE-NOTES.txt") -Value $notes -Encoding UTF8
 
