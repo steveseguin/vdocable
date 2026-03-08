@@ -68,6 +68,17 @@ jobs:
           }
           "value=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
+      - name: Detect signing readiness
+        id: signing
+        shell: pwsh
+        run: |
+          $ready = (-not [string]::IsNullOrWhiteSpace($env:WINDOWS_SIGN_PFX_BASE64)) -and `
+                   (-not [string]::IsNullOrWhiteSpace($env:WINDOWS_SIGN_PFX_PASSWORD))
+          "ready=$($ready.ToString().ToLowerInvariant())" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          if (-not $ready) {
+            Write-Warning "Signing secrets are missing. The workflow will build and upload artifacts, but it will skip publishing the GitHub release to avoid overwriting locally signed assets."
+          }
+
       - name: Run native fast gate
         shell: pwsh
         run: |
@@ -92,6 +103,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Publish GitHub release
+        if: steps.signing.outputs.ready == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.value }}
