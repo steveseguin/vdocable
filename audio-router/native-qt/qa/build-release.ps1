@@ -140,6 +140,10 @@ function Resolve-VcRuntimeDir {
     }
 
     $roots += @(
+        "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\VC\Redist\MSVC",
+        "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Redist\MSVC",
+        "C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Redist\MSVC",
+        "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Redist\MSVC",
         "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Redist\MSVC",
         "C:\Program Files (x86)\Microsoft Visual Studio\2022\Community\VC\Redist\MSVC",
         "C:\Program Files (x86)\Microsoft Visual Studio\2022\Professional\VC\Redist\MSVC",
