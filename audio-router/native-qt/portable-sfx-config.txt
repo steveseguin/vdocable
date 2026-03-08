@@ -1,0 +1,5 @@
+;!@Install@!UTF-8!
+Title="VDO Cable"
+BeginPrompt="Extract and run VDO Cable?"
+RunProgram="vdocable.exe"
+;!@InstallEnd@!

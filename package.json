@@ -1,0 +1,13 @@
+{
+  "name": "vdocable",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Docs and release-page checks for VDO Cable",
+  "scripts": {
+    "test:e2e:docs": "playwright test tests/docs --reporter=line"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "http-server": "^14.1.1"
+  }
+}

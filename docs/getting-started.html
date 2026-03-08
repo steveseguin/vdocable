@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Getting Started | VDO Cable</title>
+  <meta name="description" content="Install and route Windows application audio with VDO Cable.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body class="subpage">
+  <main class="content content-narrow">
+    <a class="back-link" href="./">Back to overview</a>
+    <section class="panel">
+      <p class="eyebrow">Install + Route</p>
+      <h1>Getting Started</h1>
+      <p class="hero-copy">
+        VDO Cable is designed for one job: take audio from specific Windows applications and publish each app as its own VDO.Ninja feed.
+      </p>
+    </section>
+
+    <section class="panel">
+      <h2>1. Install the signed Windows build</h2>
+      <p>Use the installer unless you explicitly need a portable package for QA or temporary use.</p>
+      <div class="legal-links">
+        <a href="https://github.com/steveseguin/vdocable/releases/latest/download/vdocable-setup.exe">Latest installer</a>
+        <a href="https://github.com/steveseguin/vdocable/releases/latest/download/vdocable-portable.exe">Portable EXE</a>
+        <a href="https://github.com/steveseguin/vdocable/releases/latest/download/vdocable-win64.zip">ZIP package</a>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>2. Add one route per application</h2>
+      <p>Open VDO Cable, refresh the source list, then create one route for each Windows audio session you want published separately.</p>
+      <div class="steps">
+        <article class="step">
+          <p class="step-index">A</p>
+          <p>Select an app from the source list. The app must already be producing audio so Windows exposes a live session.</p>
+        </article>
+        <article class="step">
+          <p class="step-index">B</p>
+          <p>Click <code>Add Route</code>, then set a Stream ID. Use Room and Password only when the route should join a shared workflow.</p>
+        </article>
+        <article class="step">
+          <p class="step-index">C</p>
+          <p>Start the route. Each route publishes independently and returns its own VDO.Ninja view link.</p>
+        </article>
+      </div>
+      <p>If two routes resolve to the same published Stream ID, the app marks the field in red and blocks the second publish before it hits the server.</p>
+    </section>
+
+    <section class="panel">
+      <h2>3. Use the feeds downstream</h2>
+      <p>Once a route is live, the generated view link can be opened directly in a browser or consumed by downstream tools like REAPER using separate VDO.Ninja inputs.</p>
+      <p>In v1, the app is audio-only by design. There is no virtual driver and no combined multi-track output device.</p>
+    </section>
+
+    <section class="panel">
+      <h2>QA and support expectations</h2>
+      <p>The release pipeline is set up for signed Windows artifacts, VirusTotal submission, GitHub Pages docs, native smoke loops, and logic fuzz coverage. Live network behavior still depends on your local Windows audio sessions and VDO.Ninja availability.</p>
+      <p>When signaling drops, the app uses bounded backoff and avoids websocket ping spam. If the server reports that a Stream ID is already in use, the route stops and the UI raises an explicit warning.</p>
+    </section>
+  </main>
+</body>
+</html>

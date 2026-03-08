@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VDO Cable</title>
+  <meta name="description" content="Route multiple Windows applications into separate VDO.Ninja audio streams with a signed standalone desktop app.">
+  <meta name="theme-color" content="#d97a2b">
+  <link rel="canonical" href="https://steveseguin.github.io/vdocable/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="VDO Cable">
+  <meta property="og:description" content="Windows multi-application audio routing for VDO.Ninja with duplicate-route protection and conservative signaling recovery.">
+  <meta property="og:url" content="https://steveseguin.github.io/vdocable/">
+  <meta property="og:image" content="https://steveseguin.github.io/vdocable/assets/vdocable-screenshot.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="VDO Cable">
+  <meta name="twitter:description" content="Windows multi-application audio routing for VDO.Ninja with duplicate-route protection and conservative signaling recovery.">
+  <meta name="twitter:image" content="https://steveseguin.github.io/vdocable/assets/vdocable-screenshot.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="bg-shape bg-shape-a" aria-hidden="true"></div>
+  <div class="bg-shape bg-shape-b" aria-hidden="true"></div>
+
+  <header class="hero">
+    <p class="eyebrow">Windows Standalone Audio Router</p>
+    <a class="brand-mark" href="https://vdo.ninja/" target="_blank" rel="noopener">
+      <img src="https://raw.githubusercontent.com/steveseguin/vdo.ninja/develop/media/vdoninja.png" alt="VDO.Ninja logo">
+      <span>Powered by VDO.Ninja</span>
+    </a>
+    <h1>VDO Cable</h1>
+    <p class="hero-copy">
+      Publish audio from multiple Windows applications to separate VDO.Ninja stream IDs without a virtual driver.
+      Each route gets its own WASAPI capture, websocket signaling session, and WebRTC audio publisher.
+    </p>
+    <div class="hero-actions">
+      <a id="downloadLatest" class="btn btn-primary" href="https://github.com/steveseguin/vdocable/releases/latest/download/vdocable-setup.exe">Download Installer</a>
+      <a class="btn btn-ghost" href="https://github.com/steveseguin/vdocable/releases/latest/download/vdocable-portable.exe">Portable EXE</a>
+      <a class="btn btn-ghost" href="https://github.com/steveseguin/vdocable/releases/latest/download/vdocable-win64.zip">ZIP Package</a>
+      <a class="btn btn-ghost" href="./getting-started.html">Getting Started</a>
+    </div>
+  </header>
+
+  <main class="content">
+    <section class="panel screenshot-panel">
+      <div class="screenshot-wrapper">
+        <img
+          class="plugin-screenshot"
+          src="./assets/vdocable-screenshot.png"
+          alt="VDO Cable app showing multiple application routes with Stream ID, Room, Password, status, and publish controls"
+          width="960"
+          height="540">
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Why this exists</h2>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <h3>Per-app routing</h3>
+          <p>Select multiple active Windows audio sessions and publish each app independently.</p>
+        </article>
+        <article class="feature-card">
+          <h3>No kernel driver</h3>
+          <p>Uses WASAPI process loopback instead of a signed virtual-audio driver stack.</p>
+        </article>
+        <article class="feature-card">
+          <h3>One route, one publisher</h3>
+          <p>Every route has its own websocket, one RTC session, and one Opus audio track.</p>
+        </article>
+        <article class="feature-card">
+          <h3>Duplicate ID guardrails</h3>
+          <p>The app blocks local Stream ID collisions up front and surfaces server collision alerts when another publisher already owns the ID.</p>
+        </article>
+        <article class="feature-card">
+          <h3>Room-aware workflows</h3>
+          <p>Publish directly to stream IDs or place several routes inside the same VDO.Ninja room.</p>
+        </article>
+        <article class="feature-card">
+          <h3>Release-safe downloads</h3>
+          <p>Installer, portable EXE, and ZIP ship with fixed filenames so latest-download links never move.</p>
+        </article>
+        <article class="feature-card">
+          <h3>Signed and scanned</h3>
+          <p>Release automation is wired for Authenticode signing plus VirusTotal submission before publish.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Release assets</h2>
+      <div class="steps">
+        <article class="step">
+          <p class="step-index">1</p>
+          <p><code>vdocable-setup.exe</code> is the default signed installer with desktop and Start Menu shortcuts.</p>
+        </article>
+        <article class="step">
+          <p class="step-index">2</p>
+          <p><code>vdocable-portable.exe</code> is a self-extracting build for quick local use without installation.</p>
+        </article>
+        <article class="step">
+          <p class="step-index">3</p>
+          <p><code>vdocable-win64.zip</code> is the manual package for QA, scripting, and hash verification.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Built for release discipline</h2>
+      <div class="compat-grid">
+        <div class="compat-item">
+          <strong>Desktop QA</strong>
+          <p>Fast gate builds the app, runs CTest, smoke-launches the UI, and verifies packaging outputs.</p>
+        </div>
+        <div class="compat-item">
+          <strong>Pages QA</strong>
+          <p>Playwright checks the GitHub Pages site and stable release links before docs deploy.</p>
+        </div>
+        <div class="compat-item">
+          <strong>Windows packaging</strong>
+          <p>Qt deployment, NSIS installer creation, portable SFX creation, and stable alias generation are scripted.</p>
+        </div>
+        <div class="compat-item">
+          <strong>Release checks</strong>
+          <p>Signing and VirusTotal submission are integrated into both local scripts and tag-triggered GitHub Actions.</p>
+        </div>
+        <div class="compat-item">
+          <strong>Conservative signaling</strong>
+          <p>WebSocket pinging is disabled, reconnect attempts back off, and the app avoids fast reconnect loops when signaling is unstable.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel legal">
+      <h2>Project links</h2>
+      <div class="legal-links">
+        <a href="https://github.com/steveseguin/vdocable/releases">Browse releases</a>
+        <a href="https://github.com/steveseguin/vdocable/tree/main/audio-router/native-qt">Source tree</a>
+        <a href="https://github.com/steveseguin/vdocable/blob/main/docs/RELEASES.md">Release playbook</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p class="footer-brand">Powered by <a href="https://vdo.ninja/" target="_blank" rel="noopener">VDO.Ninja</a></p>
+    <p>Source: <a href="https://github.com/steveseguin/vdocable">github.com/steveseguin/vdocable</a></p>
+  </footer>
+</body>
+</html>

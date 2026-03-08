@@ -1,0 +1,10 @@
+**/build/
+**/build-*/
+**/dist/
+**/node_modules/
+**/qa/reports/
+playwright-report/
+test-results/
+audio-router/native-qt/.vt-apikey
+.vt-apikey
+release-notes-v*.md

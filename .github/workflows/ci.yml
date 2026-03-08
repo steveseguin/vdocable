@@ -1,0 +1,120 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/ci.yml"
+      - "audio-router/**"
+      - "docs/**"
+      - "tests/docs/**"
+      - "package.json"
+      - "package-lock.json"
+      - "playwright.config.cjs"
+      - "README.md"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/ci.yml"
+      - "audio-router/**"
+      - "docs/**"
+      - "tests/docs/**"
+      - "package.json"
+      - "package-lock.json"
+      - "playwright.config.cjs"
+      - "README.md"
+
+jobs:
+  native-fast-gate:
+    runs-on: windows-2022
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Checkout Game Capture dependency
+        uses: actions/checkout@v4
+        with:
+          repository: steveseguin/game-capture
+          path: game-capture
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.31.6"
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          host: "windows"
+          target: "desktop"
+          arch: "win64_msvc2022_64"
+          cache: true
+
+      - name: Install packaging tools
+        shell: pwsh
+        run: |
+          choco install nsis 7zip.install -y --no-progress
+
+      - name: Run native fast gate
+        shell: pwsh
+        run: |
+          .\audio-router\native-qt\qa\run-fast-gate.ps1 -BuildDir build-ci -Configuration Release
+
+      - name: Run native stability gate
+        shell: pwsh
+        run: |
+          .\audio-router\native-qt\qa\run-stability-gate.ps1 -BuildDir build-ci -Configuration Release -Iterations 3
+
+      - name: Upload QA reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-fast-gate-reports
+          path: audio-router/native-qt/qa/reports/*.md
+          if-no-files-found: warn
+
+      - name: Upload release staging
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-dist
+          path: audio-router/native-qt/dist/*
+          if-no-files-found: warn
+
+  docs-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Run docs E2E
+        run: npm run test:e2e:docs
+
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-e2e-results
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
