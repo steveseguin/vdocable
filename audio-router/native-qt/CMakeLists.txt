@@ -112,6 +112,7 @@ set(ROUTER_SOURCES
     src/webrtc/audio_webrtc_client.cpp
     ${GAME_CAPTURE_ROOT}/src/signaling/vdo_signaling.cpp
     ${GAME_CAPTURE_ROOT}/src/audio/opus_encoder.cpp
+    ${GAME_CAPTURE_ROOT}/src/audio/audio_format_converter.cpp
     ${GAME_CAPTURE_ROOT}/src/audio/window_audio_capture_core.cpp
 )
 
@@ -178,6 +179,7 @@ if(VDO_CABLE_BUILD_TESTS)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     target_link_libraries(vdocable_logic_test PRIVATE Threads::Threads)
-    target_link_libraries(vdocable_logic_test PRIVATE mbedcrypto)
+    target_link_libraries(vdocable_logic_test PRIVATE mbedcrypto Qt6::Widgets)
     add_test(NAME vdocable_logic_test COMMAND vdocable_logic_test)
+    set_tests_properties(vdocable_logic_test PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endif()
