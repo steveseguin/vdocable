@@ -112,6 +112,7 @@ set(ROUTER_SOURCES
     src/webrtc/audio_webrtc_client.cpp
     ${GAME_CAPTURE_ROOT}/src/signaling/vdo_signaling.cpp
     ${GAME_CAPTURE_ROOT}/src/audio/opus_encoder.cpp
+    ${GAME_CAPTURE_ROOT}/src/audio/audio_format_converter.cpp
     ${GAME_CAPTURE_ROOT}/src/audio/window_audio_capture_core.cpp
 )
 
