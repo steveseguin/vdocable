@@ -1,6 +1,7 @@
 #include "router/ui/main_window.h"
 
 #include "router/ui/route_widget.h"
+#include "router/ui/publisher_settings.h"
 #include "router/util/router_text.h"
 
 #include <QCloseEvent>
@@ -454,9 +455,7 @@ void MainWindow::updateRoutes() {
 
 void MainWindow::loadSettings() {
     QSettings settings("VDO.Ninja", "VDOCable");
-    serverInput_->setText(settings.value("server", "wss://wss.vdo.ninja").toString());
-    saltInput_->setText(settings.value("salt", "vdo.ninja").toString());
-    viewerLimitSpin_->setValue(settings.value("maxViewers", 8).toInt());
+    restorePublisherSettings(settings, *serverInput_, *saltInput_, *viewerLimitSpin_);
 
     const int routeCount = settings.beginReadArray("routes");
     for (int i = 0; i < routeCount; ++i) {

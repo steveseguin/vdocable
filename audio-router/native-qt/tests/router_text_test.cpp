@@ -1,4 +1,8 @@
 #include "router/util/router_text.h"
+#include "router/ui/publisher_settings.h"
+
+#include <QApplication>
+#include <QTemporaryDir>
 
 #include <array>
 #include <cctype>
@@ -24,9 +28,96 @@ bool hasOnlyAllowedChars(const std::string &value) {
     return true;
 }
 
+
+void testPublisherSettings() {
+    struct Defaults {
+        const char *server;
+        const char *salt;
+        int viewers;
+    };
+    const std::array<Defaults, 5> cases = {{
+        {"wss://wss.vdo.ninja", "vdo.ninja", 8},
+        {"wss://custom.example", "vdo.ninja", 8},
+        {"wss://wss.vdo.ninja", "custom-salt", 8},
+        {"wss://wss.vdo.ninja", "vdo.ninja", 12},
+        {"wss://custom.example", "custom-salt", 12}
+    }};
+    for (const auto &defaults : cases) {
+        QTemporaryDir directory;
+        expect(directory.isValid(), "settings test needs a temporary directory");
+        const QString filename = directory.filePath("settings.ini");
+        QSettings settings(filename, QSettings::IniFormat);
+        settings.setValue("server", defaults.server);
+        settings.setValue("salt", defaults.salt);
+        settings.setValue("maxViewers", defaults.viewers);
+        settings.beginWriteArray("routes", 2);
+        for (int i = 0; i < 2; ++i) {
+            settings.setArrayIndex(i);
+            settings.setValue("streamId", QString("saved_route_%1").arg(i));
+        }
+        settings.endArray();
+        settings.sync();
+
+        QLineEdit server("wss://wss.vdo.ninja");
+        QLineEdit salt("vdo.ninja");
+        QSpinBox viewers;
+        viewers.setRange(1, 64);
+        viewers.setValue(8);
+        int saveCount = 0;
+        int loadedRoutes = 0;
+        const auto save = [&]() {
+            ++saveCount;
+            QSettings output(filename, QSettings::IniFormat);
+            output.setValue("server", server.text());
+            output.setValue("salt", salt.text());
+            output.setValue("maxViewers", viewers.value());
+            output.beginWriteArray("routes", loadedRoutes);
+            for (int i = 0; i < loadedRoutes; ++i) {
+                output.setArrayIndex(i);
+                output.setValue("streamId", QString("saved_route_%1").arg(i));
+            }
+            output.endArray();
+        };
+        QObject::connect(&server, &QLineEdit::textChanged, save);
+        QObject::connect(&salt, &QLineEdit::textChanged, save);
+        QObject::connect(&viewers, qOverload<int>(&QSpinBox::valueChanged), save);
+
+        router::ui::restorePublisherSettings(settings, server, salt, viewers);
+        expect(saveCount == 0, "restoring publisher defaults must not save incomplete routes");
+        expect(server.text() == defaults.server, "saved server must be restored");
+        expect(salt.text() == defaults.salt, "saved salt must be restored");
+        expect(viewers.value() == defaults.viewers, "saved viewer limit must be restored");
+        loadedRoutes = settings.beginReadArray("routes");
+        expect(loadedRoutes == 2, "all saved routes must survive restoring defaults");
+        for (int i = 0; i < loadedRoutes; ++i) {
+            settings.setArrayIndex(i);
+            expect(settings.value("streamId").toString() == QString("saved_route_%1").arg(i),
+                   "saved route contents must survive restoring defaults");
+        }
+        settings.endArray();
+
+        server.setText("wss://edited.example");
+        salt.setText("edited-salt");
+        viewers.setValue(32);
+        expect(saveCount == 3, "normal edits must resume persistence after restoration");
+        expect(settings.value("server").toString() == "wss://edited.example", "server edits must persist");
+        expect(settings.value("salt").toString() == "edited-salt", "salt edits must persist");
+        expect(settings.value("maxViewers").toInt() == 32, "viewer limit edits must persist");
+        expect(settings.beginReadArray("routes") == 2, "normal saves must retain loaded routes");
+        settings.endArray();
+
+        server.blockSignals(true);
+        router::ui::restorePublisherSettings(settings, server, salt, viewers);
+        expect(server.signalsBlocked(), "restoration must preserve preexisting signal blocking");
+        expect(!salt.signalsBlocked() && !viewers.signalsBlocked(), "other controls must remain unblocked");
+    }
+}
+
 }  // namespace
 
-int main() {
+int main(int argc, char **argv) {
+    QApplication app(argc, argv);
+    testPublisherSettings();
     router::app::SourceInfo source;
     source.processId = 4242;
     source.displayName = "Discord";
